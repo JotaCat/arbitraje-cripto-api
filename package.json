@@ -1,13 +1,15 @@
 {
   "name": "arbitraje-cripto-api",
   "version": "1.0.0",
-  "description": "API de arbitraje de criptomonedas con CCXT",
+  "description": "API para arbitraje cripto en tiempo real con CCXT",
   "main": "index.js",
+  "type": "commonjs",
   "scripts": {
     "start": "node index.js"
   },
   "dependencies": {
-    "ccxt": "^4.0.0",
+    "ccxt": "^4.0.75",
+    "cors": "^2.8.5",
     "express": "^4.18.2"
   }
 }
