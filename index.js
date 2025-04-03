@@ -24,7 +24,8 @@ app.get("/precios", async (req, res) => {
       try {
         const exchange = new ccxt[ex]({
           timeout: 5000,
-          enableRateLimit: true
+          enableRateLimit: true,
+          options: ex === "binance" ? { defaultType: "spot" } : {}
         });
 
         await exchange.loadMarkets();
