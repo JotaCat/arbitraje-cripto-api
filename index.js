@@ -8,8 +8,8 @@ const port = process.env.PORT || 3000;
 app.use(cors());
 
 app.get("/precios", async (req, res) => {
-  const coins = ["BTC/USDT", "ETH/USDT", "BNB/USDT", "SOL/USDT", "XRP/USDT", "USDT/USD", "USDC/USD"];
-  const exchanges = ["binance", "coinbasepro", "kraken", "kucoin", "bitmart", "cryptocom", "gemini"];
+  const coins = ["BTC/USDT", "ETH/USDT", "BNB/USDT", "SOL/USDT", "XRP/USDT"];
+  const exchanges = ["binance", "kraken", "kucoin"];
   const result = {};
 
   for (const coin of coins) {
@@ -20,7 +20,7 @@ app.get("/precios", async (req, res) => {
         const ticker = await exchange.fetchTicker(coin);
         result[coin][ex] = {
           price: ticker.last,
-          timestamp: ticker.timestamp,
+          timestamp: ticker.timestamp
         };
       } catch (err) {
         result[coin][ex] = null;
@@ -32,8 +32,5 @@ app.get("/precios", async (req, res) => {
 });
 
 app.listen(port, () => {
-  console.log(`✅ Servidor Express escuchando en puerto ${port}`);
+  console.log(`✅ Servidor escuchando en puerto ${port}`);
 });
-
-
-
