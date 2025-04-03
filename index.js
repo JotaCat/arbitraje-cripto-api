@@ -5,7 +5,14 @@ const ccxt = require("ccxt");
 const app = express();
 const port = process.env.PORT || 3000;
 
-app.use(cors());
+// ✅ CORS configurado solo para tu dominio de Hostinger
+app.use(
+  cors({
+    origin: "https://grey-panther-206275.hostingersite.com", // tu web real
+    methods: "GET",
+    optionsSuccessStatus: 200,
+  })
+);
 
 app.get("/precios", async (req, res) => {
   const coins = [
@@ -35,6 +42,7 @@ app.get("/precios", async (req, res) => {
   for (const coin of coins) {
     result[coin] = {};
 
+    // ✅ Llamadas en paralelo para cada exchange
     const promises = exchanges.map(async (ex) => {
       try {
         const exchange = new ccxt[ex]();
