@@ -35,7 +35,7 @@ app.get("/precios", async (req, res) => {
   for (const coin of coins) {
     result[coin] = {};
 
-    for (const ex of exchanges) {
+    const promises = exchanges.map(async (ex) => {
       try {
         const exchange = new ccxt[ex]();
         const ticker = await exchange.fetchTicker(coin);
@@ -46,7 +46,9 @@ app.get("/precios", async (req, res) => {
       } catch (err) {
         result[coin][ex] = null;
       }
-    }
+    });
+
+    await Promise.all(promises);
   }
 
   res.json(result);
