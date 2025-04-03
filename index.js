@@ -14,11 +14,10 @@ app.use(cors({
 app.get("/precios", async (req, res) => {
   const coins = [
     "BTC/USDT", "ETH/USDT", "BNB/USDT",
-    "SOL/USDT", "XRP/USDT", "ARB/USDT",
-    "OP/USDT", "PEPE/USDT", "DOGE/USDT"
+    "SOL/USDT", "XRP/USDT"
   ];
 
-  // 👇 SOLO los exchanges más estables por ahora
+  // Mantenemos solo los más estables por ahora
   const exchanges = ["binance", "kucoin", "kraken", "bitget"];
 
   const result = {};
@@ -28,9 +27,20 @@ app.get("/precios", async (req, res) => {
 
     const tasks = exchanges.map(async (ex) => {
       try {
-        const exchange = new ccxt[ex]({ timeout: 5000 });
-        const ticker = await exchange.fetchTicker(coin);
+        const exchange = new ccxt[ex]({
+          timeout: 4000,  // menor tiempo de espera
+          enableRateLimit: true  // para evitar baneos
+        });
 
+        // Verificamos si el par existe en el exchange
+        await exchange.loadMarkets();
+        if (!exchange.markets[coin]) {
+          console.warn(`⚠️ ${coin} no soportado en ${ex}`);
+          result[coin][ex] = null;
+          return;
+        }
+
+        const ticker = await exchange.fetchTicker(coin);
         result[coin][ex] = {
           price: ticker.last,
           timestamp: ticker.timestamp
@@ -43,7 +53,7 @@ app.get("/precios", async (req, res) => {
       }
     });
 
-    await Promise.all(tasks);
+    await Promise.allSettled(tasks); // evitamos que falle por un solo exchange
   }
 
   res.json(result);
