@@ -5,7 +5,7 @@ const ccxt = require("ccxt");
 const app = express();
 const port = process.env.PORT || 3000;
 
-app.use(cors()); // <-- ¡Activa CORS!
+app.use(cors());
 
 app.get("/precios", async (req, res) => {
   const coins = ["BTC/USDT", "ETH/USDT", "BNB/USDT", "SOL/USDT", "XRP/USDT", "USDT/USD", "USDC/USD"];
@@ -17,5 +17,22 @@ app.get("/precios", async (req, res) => {
     for (const ex of exchanges) {
       try {
         const exchange = new ccxt[ex]();
-        const ticker = await exchange.fetch
+        const ticker = await exchange.fetchTicker(coin);
+        result[coin][ex] = {
+          price: ticker.last,
+          timestamp: ticker.timestamp,
+        };
+      } catch (err) {
+        result[coin][ex] = null;
+      }
+    }
+  }
+
+  res.json(result);
+});
+
+app.listen(port, () => {
+  console.log(`✅ Servidor Express escuchando en puerto ${port}`);
+});
+
 
