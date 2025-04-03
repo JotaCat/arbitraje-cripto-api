@@ -1,16 +1,16 @@
 {
   "name": "arbitraje-cripto-api",
   "version": "1.0.0",
-  "description": "API de arbitraje cripto",
   "main": "index.js",
   "type": "commonjs",
   "scripts": {
     "start": "node index.js"
   },
   "dependencies": {
-    "ccxt": "^4.0.75",
+    "ccxt": "^4.0.81",
     "cors": "^2.8.5",
     "express": "^4.18.2"
   }
 }
+
 
