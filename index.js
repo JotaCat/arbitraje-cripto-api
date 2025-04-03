@@ -12,8 +12,8 @@ app.use(cors({
 }));
 
 app.get("/precios", async (req, res) => {
-  const coins = ["BTC/USDT"];
-  const exchanges = ["binance", "kraken"];
+  const coins = ["BTC/USDT", "ETH/USDT", "BNB/USDT"];
+  const exchanges = ["binance", "kraken", "kucoin"];
 
   const result = {};
 
@@ -22,7 +22,18 @@ app.get("/precios", async (req, res) => {
 
     const tasks = exchanges.map(async (ex) => {
       try {
-        const exchange = new ccxt[ex]({ timeout: 4000, enableRateLimit: true });
+        const exchange = new ccxt[ex]({
+          timeout: 5000,
+          enableRateLimit: true
+        });
+
+        await exchange.loadMarkets();
+        if (!exchange.markets[coin]) {
+          console.warn(`⚠️ ${coin} no soportado en ${ex}`);
+          result[coin][ex] = null;
+          return;
+        }
+
         const ticker = await exchange.fetchTicker(coin);
 
         result[coin][ex] = {
@@ -46,4 +57,3 @@ app.get("/precios", async (req, res) => {
 app.listen(port, () => {
   console.log(`✅ Servidor Express escuchando en puerto ${port}`);
 });
-
