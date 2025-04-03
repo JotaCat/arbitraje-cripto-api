@@ -8,32 +8,50 @@ const port = process.env.PORT || 3000;
 app.use(cors());
 
 app.get("/precios", async (req, res) => {
-  const result = {};
-  const coins = ["BTC/USDT", "ETH/USDT"];
-  const exchanges = ["binance", "kraken", "kucoin"];
+  const coins = [
+    "BTC/USDT",
+    "ETH/USDT",
+    "BNB/USDT",
+    "SOL/USDT",
+    "XRP/USDT",
+    "ARB/USDT",
+    "OP/USDT",
+    "PEPE/USDT",
+    "DOGE/USDT"
+  ];
 
-  try {
-    for (const coin of coins) {
-      result[coin] = {};
-      for (const ex of exchanges) {
-        try {
-          const exchange = new ccxt[ex]();
-          const ticker = await exchange.fetchTicker(coin);
-          result[coin][ex] = {
-            price: ticker.last,
-            timestamp: ticker.timestamp,
-          };
-        } catch (err) {
-          result[coin][ex] = null;
-        }
+  const exchanges = [
+    "binance",
+    "kraken",
+    "kucoin",
+    "bitmart",
+    "cryptocom",
+    "bybit",
+    "bitget"
+  ];
+
+  const result = {};
+
+  for (const coin of coins) {
+    result[coin] = {};
+
+    for (const ex of exchanges) {
+      try {
+        const exchange = new ccxt[ex]();
+        const ticker = await exchange.fetchTicker(coin);
+        result[coin][ex] = {
+          price: ticker.last,
+          timestamp: ticker.timestamp,
+        };
+      } catch (err) {
+        result[coin][ex] = null;
       }
     }
-    res.json(result);
-  } catch (e) {
-    res.status(500).json({ error: "Error al procesar precios" });
   }
+
+  res.json(result);
 });
 
 app.listen(port, () => {
-  console.log(`✅ Servidor corriendo en el puerto ${port}`);
+  console.log(`✅ Servidor Express escuchando en puerto ${port}`);
 });
