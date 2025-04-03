@@ -5,7 +5,7 @@ const ccxt = require("ccxt");
 const app = express();
 const port = process.env.PORT || 3000;
 
-// CORS configurado para tu dominio de WordPress
+// ✅ CORS: Permite solo tu dominio WordPress
 app.use(cors({
   origin: "https://grey-panther-206275.hostingersite.com",
   methods: ["GET"],
@@ -33,11 +33,15 @@ app.get("/precios", async (req, res) => {
       try {
         const exchange = new ccxt[ex]();
         const ticker = await exchange.fetchTicker(coin);
+
         result[coin][ex] = {
           price: ticker.last,
           timestamp: ticker.timestamp
         };
+
+        console.log(`✅ ${coin} en ${ex}: $${ticker.last}`);
       } catch (error) {
+        console.error(`❌ Error en ${ex} para ${coin}: ${error.message}`);
         result[coin][ex] = null;
       }
     });
@@ -48,7 +52,7 @@ app.get("/precios", async (req, res) => {
   res.json(result);
 });
 
-// Asegura que el servidor se lanza correctamente
+// ✅ Arranca el servidor correctamente en el puerto que Render asigna
 app.listen(port, () => {
   console.log(`✅ Servidor Express escuchando en puerto ${port}`);
 });
