@@ -1,7 +1,7 @@
 {
   "name": "arbitraje-cripto-api",
   "version": "1.0.0",
-  "description": "API de arbitraje cripto con ccxt",
+  "description": "API de arbitraje cripto",
   "main": "index.js",
   "type": "commonjs",
   "scripts": {
