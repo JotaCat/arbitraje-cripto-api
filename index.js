@@ -7,23 +7,28 @@ const port = process.env.PORT || 8080;
 
 // CORS para permitir peticiones desde tu WordPress
 app.use(cors({
-  origin: "https://grey-panther-206275.hostingersite.com",
+  origin: "https://grey-panther-206275.hostingersite.com", // tu dominio
   methods: ["GET"],
   optionsSuccessStatus: 200
 }));
 
-// Nuevas monedas y exchanges
-const coins = [
-  "BTC/USDT", "ETH/USDT", "BNB/USDT",
-  "SOL/USDT", "DOGE/USDT", "ADA/USDT"
-];
+// Ruta raíz para evitar el error Cannot GET /
+app.get("/", (req, res) => {
+  res.send("✅ API de arbitraje cripto funcionando. Usa /precios para obtener datos.");
+});
 
-const exchanges = [
-  "binance", "kraken", "kucoin",
-  "bitget", "bybit", "okx"
-];
-
+// Ruta principal de precios
 app.get("/precios", async (req, res) => {
+  const coins = [
+    "BTC/USDT", "ETH/USDT", "BNB/USDT",
+    "DOGE/USDT", "SOL/USDT", "ADA/USDT"
+  ];
+
+  const exchanges = [
+    "binance", "kraken", "kucoin",
+    "bybit", "bitget", "bitmart"
+  ];
+
   const result = {};
 
   for (const coin of coins) {
@@ -31,10 +36,10 @@ app.get("/precios", async (req, res) => {
 
     const tasks = exchanges.map(async (ex) => {
       try {
-        if ((ex === "kraken" && coin === "BNB/USDT") || 
-            (ex === "kraken" && coin === "ADA/USDT")) {
+        // Excluir pares no soportados conocidos
+        if (ex === "kraken" && coin === "BNB/USDT") {
           result[coin][ex] = null;
-          console.warn(`⛔ ${coin} no soportado en ${ex}`);
+          console.warn(`⛔ Kraken no soporta ${coin}`);
           return;
         }
 
@@ -65,12 +70,13 @@ app.get("/precios", async (req, res) => {
       }
     });
 
-    await Promise.allSettled(tasks);
+    await Promise.allSettled(tasks); // sigue con otras aunque una falle
   }
 
   res.json(result);
 });
 
+// Lanzar servidor
 app.listen(port, () => {
   console.log(`✅ Servidor Express escuchando en puerto ${port}`);
 });
