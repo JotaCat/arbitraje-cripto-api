@@ -5,24 +5,16 @@ const ccxt = require("ccxt");
 const app = express();
 const port = process.env.PORT || 8080;
 
-// ✅ CORS configurado para tu dominio de WordPress
+// ✅ CORS para permitir peticiones desde tu WordPress
 app.use(cors({
-  origin: ["https://grey-panther-206275.hostingersite.com"], // <--- tu dominio WordPress
+  origin: "https://grey-panther-206275.hostingersite.com",
   methods: ["GET"],
   optionsSuccessStatus: 200
 }));
 
-// ⏱️ Establece un timeout global por si algún exchange se cuelga
-const TIMEOUT = 5000;
-
-// 🪙 Pares y exchanges a usar
-const coins = [
-  "BTC/USDT", "ETH/USDT", "BNB/USDT"
-];
-
-const exchanges = [
-  "binance", "kraken", "kucoin"
-];
+// 🪙 Pares de criptos y exchanges
+const coins = ["BTC/USDT", "ETH/USDT", "BNB/USDT"];
+const exchanges = ["binance", "kraken", "kucoin"]; // Agrega más cuando esté estable
 
 app.get("/precios", async (req, res) => {
   const result = {};
@@ -33,8 +25,18 @@ app.get("/precios", async (req, res) => {
     const tasks = exchanges.map(async (ex) => {
       try {
         const exchange = new ccxt[ex]({
-          timeout: TIMEOUT
+          timeout: 10000,
+          enableRateLimit: true,
+          options: ex === "binance" ? { defaultType: "spot" } : {}
         });
+
+        await exchange.loadMarkets();
+
+        if (!exchange.markets[coin]) {
+          console.warn(`⚠️ ${coin} no soportado en ${ex}`);
+          result[coin][ex] = null;
+          return;
+        }
 
         const ticker = await exchange.fetchTicker(coin);
 
@@ -45,18 +47,17 @@ app.get("/precios", async (req, res) => {
 
         console.log(`✅ ${coin} en ${ex}: $${ticker.last}`);
       } catch (err) {
-        console.log(`❌ Error en ${ex} para ${coin}:`, err.message);
+        console.error(`❌ Error en ${ex} para ${coin}:`, err.message);
         result[coin][ex] = null;
       }
     });
 
-    await Promise.all(tasks);
+    await Promise.allSettled(tasks); // Para que no se caiga si falla un exchange
   }
 
   res.json(result);
 });
 
-// 🔥 Inicia el servidor
 app.listen(port, () => {
   console.log(`✅ Servidor Express escuchando en puerto ${port}`);
 });
