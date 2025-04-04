@@ -5,18 +5,17 @@ const ccxt = require("ccxt");
 const app = express();
 const port = process.env.PORT || 8080;
 
-// ✅ CORS para permitir peticiones desde tu WordPress
+// CORS para permitir peticiones desde tu WordPress
 app.use(cors({
-  origin: "https://grey-panther-206275.hostingersite.com",
+  origin: "https://grey-panther-206275.hostingersite.com", // tu dominio
   methods: ["GET"],
   optionsSuccessStatus: 200
 }));
 
-// 🪙 Pares de criptos y exchanges
-const coins = ["BTC/USDT", "ETH/USDT", "BNB/USDT"];
-const exchanges = ["binance", "kraken", "kucoin"]; // Agrega más cuando esté estable
-
 app.get("/precios", async (req, res) => {
+  const coins = ["BTC/USDT", "ETH/USDT", "BNB/USDT"];
+  const exchanges = ["binance", "kraken", "kucoin"];
+
   const result = {};
 
   for (const coin of coins) {
@@ -24,6 +23,13 @@ app.get("/precios", async (req, res) => {
 
     const tasks = exchanges.map(async (ex) => {
       try {
+        // Excluir pares no soportados directamente
+        if (ex === "kraken" && coin === "BNB/USDT") {
+          result[coin][ex] = null;
+          console.warn(`⛔ Kraken no soporta ${coin}`);
+          return;
+        }
+
         const exchange = new ccxt[ex]({
           timeout: 10000,
           enableRateLimit: true,
@@ -32,14 +38,13 @@ app.get("/precios", async (req, res) => {
 
         await exchange.loadMarkets();
 
-        if (!exchange.markets[coin]) {
-          console.warn(`⚠️ ${coin} no soportado en ${ex}`);
+        if (!exchange.markets || !exchange.markets[coin]) {
           result[coin][ex] = null;
+          console.warn(`⚠️ ${coin} no está disponible en ${ex}`);
           return;
         }
 
         const ticker = await exchange.fetchTicker(coin);
-
         result[coin][ex] = {
           price: ticker.last,
           timestamp: ticker.timestamp
@@ -47,12 +52,12 @@ app.get("/precios", async (req, res) => {
 
         console.log(`✅ ${coin} en ${ex}: $${ticker.last}`);
       } catch (err) {
-        console.error(`❌ Error en ${ex} para ${coin}:`, err.message);
         result[coin][ex] = null;
+        console.error(`❌ Error en ${ex} para ${coin}: ${err.message}`);
       }
     });
 
-    await Promise.allSettled(tasks); // Para que no se caiga si falla un exchange
+    await Promise.allSettled(tasks); // evita que un error pare todo
   }
 
   res.json(result);
