@@ -7,15 +7,23 @@ const port = process.env.PORT || 8080;
 
 // CORS para permitir peticiones desde tu WordPress
 app.use(cors({
-  origin: "https://grey-panther-206275.hostingersite.com", // tu dominio
+  origin: "https://grey-panther-206275.hostingersite.com",
   methods: ["GET"],
   optionsSuccessStatus: 200
 }));
 
-app.get("/precios", async (req, res) => {
-  const coins = ["BTC/USDT", "ETH/USDT", "BNB/USDT"];
-  const exchanges = ["binance", "kraken", "kucoin"];
+// Nuevas monedas y exchanges
+const coins = [
+  "BTC/USDT", "ETH/USDT", "BNB/USDT",
+  "SOL/USDT", "DOGE/USDT", "ADA/USDT"
+];
 
+const exchanges = [
+  "binance", "kraken", "kucoin",
+  "bitget", "bybit", "okx"
+];
+
+app.get("/precios", async (req, res) => {
   const result = {};
 
   for (const coin of coins) {
@@ -23,10 +31,10 @@ app.get("/precios", async (req, res) => {
 
     const tasks = exchanges.map(async (ex) => {
       try {
-        // Excluir pares no soportados directamente
-        if (ex === "kraken" && coin === "BNB/USDT") {
+        if ((ex === "kraken" && coin === "BNB/USDT") || 
+            (ex === "kraken" && coin === "ADA/USDT")) {
           result[coin][ex] = null;
-          console.warn(`⛔ Kraken no soporta ${coin}`);
+          console.warn(`⛔ ${coin} no soportado en ${ex}`);
           return;
         }
 
@@ -57,7 +65,7 @@ app.get("/precios", async (req, res) => {
       }
     });
 
-    await Promise.allSettled(tasks); // evita que un error pare todo
+    await Promise.allSettled(tasks);
   }
 
   res.json(result);
